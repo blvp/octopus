@@ -101,7 +101,8 @@ abstract class AsyncValidationSpec[M[_]: ToFuture] extends AsyncWordSpec with Fi
       }
 
     implicit val userWithEmailValidator: AsyncValidatorM[M, User] =
-      Validator[User]
+      Validator
+        .derived[User]
         .asyncM[M]
         .rule[Email](_.email, validateEmailF, Exception_HandledDuringValidation)
 
@@ -177,17 +178,12 @@ abstract class AsyncValidationSpec[M[_]: ToFuture] extends AsyncWordSpec with Fi
       }
 
       "rejected user errors should contain proper error massage" in {
+        import asyncValidators._
+
         user_Invalid3.validateAsync.toFuture()
           .map(_.errors must contain(expectedValidationException))
 
-        // this test is pretty fucked up, as this doesn't pick rules from asyncValidators object
-        // note they are not imported here! FIX this up!
-
-//        user_Invalid1.validateAsync.toFuture().map {
-//          result =>
-//            println(result.toFieldErrMapping)
-//            result.errors must contain(expectedValidationException)
-//        }
+        user_Invalid1.validateAsync.toFuture().map(_.errors must contain(expectedValidationException))
       }
     }
 
